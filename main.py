@@ -93,7 +93,7 @@ def is_game_in_equilibrium(game_to_test, games, neighbors_of_game):
                     player_utility_in_game = 0
 
             if player_utility_in_game < player_utility_in_op_game:
-                print game_to_test, "<", game_id
+                print game_to_test, "<", game_id, "For player of type", relevant_player
                 return False
 
     return True
@@ -160,7 +160,7 @@ for game_id in range(len(games)):
         print games[game_id][contest_id]
         print games[game_id][contest_id]._contest_result
 
-print "\n\n\n"
+print "\n"
 neighbors_matrix = []
 
 for game_id in range(len(games)):
@@ -175,7 +175,11 @@ for game_id in range(len(neighbors_matrix)):
     neighbors_of_game = neighbors_matrix[game_id]
     if is_game_in_equilibrium(game_id, games, neighbors_of_game):
         games_in_equilibrium.append(game_id)
+print
+print "Games in equilibrium: "
 
 for game_id in games_in_equilibrium:
     print game_id
 
+if len(games_in_equilibrium) == 0:
+    print "No equilibrium"
