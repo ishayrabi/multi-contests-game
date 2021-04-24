@@ -34,6 +34,9 @@ def are_games_neighbors(game1, game2):
                 are_games_neighbors += 1
                 type = game_1_players_tuple["type"]
                 contests.append(contest_id)
+            elif abs(game_1_players_tuple["amount"] - game_2_players_tuple["amount"]) > 1:
+                return None
+
 
     if are_games_neighbors == 2:
         return {"type": type, "contests": contests}
