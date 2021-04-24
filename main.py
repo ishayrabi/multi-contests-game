@@ -1,7 +1,7 @@
 from contest import Contest
 import itertools
 import copy
-
+import json
 
 def flatten_players_list(player_creation_instructions):
     flatten_players_list = list()
@@ -105,11 +105,13 @@ def is_game_in_equilibrium(game_to_test, games, neighbors_of_game):
 # The first value is the player's type (the lower the type - the stronger the player)
 # The second value is the amount of players of this type to compete in the game.
 # NOTICE: the program assumes that the strong player shows first in the list of tuples
-player_creation_instructions = [{"type": 1, "amount": 2}, {"type": 2, "amount": 2}]
+f = open('Config.json', )
 
-# The list of prizes in the game
-# each item sets a contests, the value is the prize of winning the first place.
-prizes = [10, 5.624]
+config = json.load(f)
+
+player_creation_instructions = config["player_creation_instructions"]
+prizes = config["prizes"]
+
 
 # Flatten the problem
 flatt_players_list = flatten_players_list(player_creation_instructions)

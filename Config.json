@@ -1,0 +1,16 @@
+{
+    "player_creation_instructions": [
+        {
+            "amount": 10,
+            "type": 1
+        },
+        {
+            "amount": 10,
+            "type": 2
+        }
+    ],
+    "prizes": [
+        10,
+        10
+    ]
+}
