@@ -46,35 +46,39 @@ class Contest:
 
                 #  Assuming that the active players' list is sorted, the weakest player will be last.
                 weakest_player_tuple = active_players[len(active_players) - 1]
+                lowest_player_effort = -1
+                while lowest_player_effort <= 0 and weakest_player_tuple["amount"] > 0:
 
-                # Calculating the number of active players and the sum of the types
-                sum_of_players_types = 0
-                amount_of_players = 0
-                for active_players_tuple in active_players:
-                    amount_of_players += active_players_tuple["amount"]
-                    sum_of_players_types += active_players_tuple["amount"] * active_players_tuple["type"]
+                    # Calculating the number of active players and the sum of the types
+                    sum_of_players_types = 0
+                    amount_of_players = 0
+                    for active_players_tuple in active_players:
+                        amount_of_players += active_players_tuple["amount"]
+                        sum_of_players_types += active_players_tuple["amount"] * active_players_tuple["type"]
 
-                # Calculate the total effort
-                total_effort = self.calculate_total_effort(amount_of_players, sum_of_players_types)
+                    # Calculate the total effort
+                    total_effort = self.calculate_total_effort(amount_of_players, sum_of_players_types)
 
-                weakest_player_prob_of_winning = \
-                    self.calculate_single_player_probability_of_winning(amount_of_players, sum_of_players_types,
-                                                                        weakest_player_tuple["type"])
-                lowest_player_effort = self.calculate_single_player_effort(total_effort, weakest_player_prob_of_winning)
+                    weakest_player_prob_of_winning = \
+                        self.calculate_single_player_probability_of_winning(amount_of_players, sum_of_players_types,
+                                                                            weakest_player_tuple["type"])
+                    lowest_player_effort = self.calculate_single_player_effort(total_effort, weakest_player_prob_of_winning)
 
-                # If the effort is positive - we reached an equilibrium
-                if lowest_player_effort > 0:
-                    contest_result = dict()
-                    for active_player in list(active_players):
-                        active_player["prob_of_winning"] = self.calculate_single_player_probability_of_winning(
-                            amount_of_players, sum_of_players_types, active_player["type"])
-                        active_player["effort"] = self.calculate_single_player_effort(total_effort,
-                                                                                      active_player["prob_of_winning"])
-                        active_player["utility"] = self._prize * active_player["prob_of_winning"] - active_player[
-                            "effort"] * active_player["type"]
-                        contest_result[active_player["type"]] = active_player
-                    self._contest_result = contest_result
-
+                    # If the effort is positive - we reached an equilibrium
+                    if lowest_player_effort > 0:
+                        contest_result = dict()
+                        for active_player in list(active_players):
+                            active_player["prob_of_winning"] = self.calculate_single_player_probability_of_winning(
+                                amount_of_players, sum_of_players_types, active_player["type"])
+                            active_player["effort"] = self.calculate_single_player_effort(total_effort,
+                                                                                          active_player["prob_of_winning"])
+                            active_player["utility"] = self._prize * active_player["prob_of_winning"] - active_player[
+                                "effort"] * active_player["type"]
+                            contest_result[active_player["type"]] = active_player
+                        self._contest_result = contest_result
+                        return contest_result
+                    else:
+                        weakest_player_tuple["amount"] -= 1
         return self._contest_result
 
     def calculate_total_effort(self, number_of_players, sum_of_players_types):
