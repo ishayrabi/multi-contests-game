@@ -1,15 +1,19 @@
 import copy
 
+
 class Contest:
-    # static counter of the contests that hs been created
+
+    # static counter of the contests that has been created
     contest_count = 0
 
+    # Create a new contest
     def __init__(self, prize):
         # Increase the counter of the contests been created
         Contest.contest_count += 1
 
         self._players = None
         self._contest_result = None
+        self._active_players = None
         self._prize = prize
         self._contest_id = Contest.contest_count
 
@@ -36,53 +40,60 @@ class Contest:
             active_player = copy.deepcopy(relevant_players[0])
             active_player["prob_of_winning"] = 1
             active_player["effort"] = 0
-            active_player["utility"] = self._prize
-            self._contest_result = {active_player["type"]: active_player}
+            active_player["utility"] = self.calculate_prize(relevant_players) #self._prize
+            self._contest_result = {str(active_player["type"])+"_"+str(active_player["reputation"]): active_player}
+            self._active_players = relevant_players
         else:
             # We will start by assuming all the players are active
             for i in range(len(relevant_players)):
-                # Defining te active players
+                # Defining the active players
                 active_players = copy.deepcopy(relevant_players[0:len(relevant_players) - i])
 
                 #  Assuming that the active players' list is sorted, the weakest player will be last.
                 weakest_player_tuple = active_players[len(active_players) - 1]
-                lowest_player_effort = -1
-                while lowest_player_effort <= 0 and weakest_player_tuple["amount"] > 0:
+                arrived_an_equilibrium = False
+                while not arrived_an_equilibrium and weakest_player_tuple["amount"] > 0:
 
                     # Calculating the number of active players and the sum of the types
-                    sum_of_players_types = 0
-                    amount_of_players = 0
-                    for active_players_tuple in active_players:
-                        amount_of_players += active_players_tuple["amount"]
-                        sum_of_players_types += active_players_tuple["amount"] * active_players_tuple["type"]
+                    sum_of_players_types = Contest.get_player_sum_types(active_players)
+                    amount_of_players = Contest.get_players_amount(active_players)
 
                     # Calculate the total effort
-                    total_effort = self.calculate_total_effort(amount_of_players, sum_of_players_types)
+                    total_effort = self.calculate_total_effort(active_players)
 
                     weakest_player_prob_of_winning = \
                         self.calculate_single_player_probability_of_winning(amount_of_players, sum_of_players_types,
                                                                             weakest_player_tuple["type"])
-                    lowest_player_effort = self.calculate_single_player_effort(total_effort, weakest_player_prob_of_winning)
+                    lowest_player_effort = self.calculate_single_player_effort(total_effort,
+                                                                               weakest_player_prob_of_winning)
 
                     # If the effort is positive - we reached an equilibrium
                     if lowest_player_effort > 0:
                         contest_result = dict()
+                        all_players_are_active = True
                         for active_player in list(active_players):
                             active_player["prob_of_winning"] = self.calculate_single_player_probability_of_winning(
                                 amount_of_players, sum_of_players_types, active_player["type"])
-                            active_player["effort"] = self.calculate_single_player_effort(total_effort,
-                                                                                          active_player["prob_of_winning"])
-                            active_player["utility"] = self._prize * active_player["prob_of_winning"] - active_player[
-                                "effort"] * active_player["type"]
-                            contest_result[active_player["type"]] = active_player
-                        self._contest_result = contest_result
-                        return contest_result
-                    else:
-                        weakest_player_tuple["amount"] -= 1
+                            
+                            tmp_effort = self.calculate_single_player_effort(total_effort,
+                                                                                          active_player[
+                                                                                              "prob_of_winning"])
+                            active_player["effort"] = tmp_effort
+                            active_player["utility"] = self.calculate_prize(active_players) * active_player["prob_of_winning"]*active_player["prob_of_winning"]
+                            contest_result[str(active_player["type"])+"_"+str(active_player["reputation"])] = active_player
+                            if tmp_effort <= 0:
+                                all_players_are_active = False
+                        if all_players_are_active:
+                            self._contest_result = contest_result
+                            self._active_players = active_players
+                            return contest_result
+
+                    weakest_player_tuple["amount"] -= 1
         return self._contest_result
 
-    def calculate_total_effort(self, number_of_players, sum_of_players_types):
-        return float((self._prize * (number_of_players - 1)) / float(sum_of_players_types))
+    def calculate_total_effort(self, relevant_players):
+        return float((self.calculate_prize(relevant_players) * (self.get_players_amount(relevant_players) - 1)) /
+                     float(self.get_player_sum_types(relevant_players)))
 
     @staticmethod
     def calculate_single_player_probability_of_winning(active_players_count, total_players_types, player_type):
@@ -92,6 +103,52 @@ class Contest:
     def calculate_single_player_effort(total_effort, probability_of_winning):
         return total_effort * probability_of_winning
 
+    @staticmethod
+    def get_players_amount(relevant_players_dict):
+        amount_of_players = 0
+        for relevant_players_tuple in relevant_players_dict:
+            amount_of_players += relevant_players_tuple["amount"]
+
+        return amount_of_players
+
+    @staticmethod
+    def get_player_sum_types(relevant_players_dict):
+        sum_types = 0
+        for relevant_players_tuple in relevant_players_dict:
+            sum_types += relevant_players_tuple["amount"] * relevant_players_tuple["type"]
+
+        return sum_types
+
+    @staticmethod
+    def get_player_sum_reputations(relevant_players_dict):
+        sum_types = 0
+        for relevant_players_tuple in relevant_players_dict:
+            sum_types += relevant_players_tuple["amount"] * relevant_players_tuple["reputation"]
+
+        return sum_types
+
+
+    @staticmethod
+    def get_average_player_reputation(relevant_players):
+        return (Contest.get_player_sum_reputations(relevant_players) / Contest.get_players_amount(relevant_players))
+
+    def calculate_prize_nominal(self, relevant_players):
+        return self._prize
+
+    def calculate_prize_additive(self, relevant_players):
+        return self.calculate_prize_nominal(relevant_players) + Contest.get_average_player_reputation(relevant_players)
+
+    def calculate_prize_multiply(self, relevant_players):
+        return self.calculate_prize_nominal(relevant_players) * Contest.get_average_player_reputation(relevant_players)
+
+    def calculate_prize(self, relevant_players):
+        return self.calculate_prize_multiply(relevant_players)
+
     def __str__(self):
-        return "Content (" + str(self._contest_id) + ") with prize: " + str(self._prize) + " with players: " + str(
+        prize = 0
+        if self._active_players is not None:
+            prize = self.calculate_prize(self._active_players)
+
+        return "Content (" + str(self._contest_id) + ") with prize: " + str(prize) + " with players: " + str(
             self._players)
+

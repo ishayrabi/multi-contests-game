@@ -1,16 +1,22 @@
 {
+    "check_loops": 0,
     "player_creation_instructions": [
         {
-            "amount": 10,
-            "type": 1
+            "amount": 3,
+            "type": 0.67,
+            "reputation": 1,
+            "score": 1
         },
         {
-            "amount": 10,
-            "type": 2
+            "amount": 1,
+            "type": 1,
+            "reputation": 1,
+            "score": 1
         }
     ],
-    "prizes": [
-        10,
-        10
+    "contests": [
+        {"prize": 1, "maxAllowedPlayers": 20, "minimum_score": 0}
     ]
 }
+
+
